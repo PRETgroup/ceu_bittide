@@ -7,22 +7,31 @@ data BittideBuffer with
     var[100] BittideFrame all_frames;
 end
 
-code/await NodeProcess (var int num_nodes, var _double freq, event& _double clock_tick, var int my_id) 
+code/await NodeProcess (var int num_nodes, var _double freq, event& _double time_event, var int my_id) 
 -> (var _double frequency, var int id, var _double next_clock_tick_time) -> NEVER do      // defines the "Anim" code abstraction
     var int num_buffers_needed = num_nodes-1;
     id = my_id;
     frequency = freq;
     next_clock_tick_time = 1/frequency;
+    event none local_clock_tick;
 
     var[num_buffers_needed] BittideBuffer localBuffers;
 
-    loop do
-        var _double simulation_time = await clock_tick;
-        if (simulation_time >= next_clock_tick_time) then
-            _printf("Clock ticked on node %d\n", id);
-            next_clock_tick_time = next_clock_tick_time + 1/frequency;
+    par/and do
+        loop do
+            var _double simulation_time = await time_event;
+            if (simulation_time >= next_clock_tick_time) then
+                next_clock_tick_time = next_clock_tick_time + 1/frequency;
+                emit local_clock_tick;
+            end
         end
+    with
+        every local_clock_tick do
+            _printf("Clock ticked on node %d\n", id);
+        end
+    //TODO: Work out how to connect various nodes as event triggers
+    //possibly dispatch N 'receive' processes for here like we did for nodes from clock process?
     end
 
-    await FOREVER;
+    await FOREVER; //really we should not reach this line
 end
