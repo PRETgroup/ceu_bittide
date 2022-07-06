@@ -1,0 +1,28 @@
+
+data BittideFrame with
+    var int contents;
+    var int ugn;
+end
+data BittideBuffer with
+    var[100] BittideFrame all_frames;
+end
+
+code/await NodeProcess (var int num_nodes, var _double freq, event& _double clock_tick, var int my_id) 
+-> (var _double frequency, var int id, var _double next_clock_tick_time) -> NEVER do      // defines the "Anim" code abstraction
+    var int num_buffers_needed = num_nodes-1;
+    id = my_id;
+    frequency = freq;
+    next_clock_tick_time = 1/frequency;
+
+    var[num_buffers_needed] BittideBuffer localBuffers;
+
+    loop do
+        var _double simulation_time = await clock_tick;
+        if (simulation_time >= next_clock_tick_time) then
+            _printf("Clock ticked on node %d\n", id);
+            next_clock_tick_time = next_clock_tick_time + 1/frequency;
+        end
+    end
+
+    await FOREVER;
+end
