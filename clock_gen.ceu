@@ -4,21 +4,32 @@ native/plain _double;
 native/pure _get_next_time;
 native/const _DBL_MAX;
 native/const _NUM_ITERATIONS;
-#include "node.ceu"
 native/pre do 
     static const int NUM_ITERATIONS = 1000;
-    #include <float.h>
+    #include <float.h>;
 end
 
+
+#include "buffer.ceu"
+data Link with
+    var& Buffer source;
+    var& Buffer dest;
+end
+#include "node.ceu"
+
 pool[] NodeProcess all_processes;
+//var[] Link all_links;
 event _double time_delta; //simulate time passing in real world
+event none read_buffers;
 var _double global_time = 0;
 var int num_nodes = 2;
 //create nodes
-spawn NodeProcess(num_nodes, 1000.0, &time_delta,0) in all_processes;
-spawn NodeProcess(num_nodes, 2000.0, &time_delta,1) in all_processes;
+var& NodeProcess proc0 = spawn NodeProcess(num_nodes, 1000.0, &time_delta, &read_buffers, 0) in all_processes;
+var& NodeProcess proc1  = spawn NodeProcess(num_nodes, 2000.0, &time_delta, &read_buffers, 1) in all_processes;
+var& Buffer buff01 = spawn Buffer(100, &proc0.local_clock_tick, &read_buffers,0,1) in proc0.localBuffers;
+var& Buffer buff10 = spawn Buffer(100, &proc1.local_clock_tick, &read_buffers,1,0) in proc1.localBuffers;
+var& Link l_0_1 = spawn Link(buff01, buff10);
 
-//
 loop _ in [0->_NUM_ITERATIONS] do
     var&? NodeProcess proc_it;
 
@@ -27,13 +38,14 @@ loop _ in [0->_NUM_ITERATIONS] do
 
     loop proc_it in all_processes do
         var& NodeProcess my_proc = &proc_it!;
-        //_printf("Node with id %d has next clock tick at %lf\n", my_proc.id, my_proc.next_clock_tick_time);
         if (my_proc.next_clock_tick_time < next_clock_tick) then
             next_clock_tick = my_proc.next_clock_tick_time;
         end
     end
     global_time = next_clock_tick;
     emit time_delta(global_time);
+    //for now, let's assume zero time delay for prototyping's sake
+    emit read_buffers;
 
     _printf("Global time is now: %lf\n", global_time);
 end

@@ -1,0 +1,12 @@
+code/await Buffer(var int size, event& none send, event& none receive, var int sourceId, var int destId)-> NEVER do
+    par/and do
+        every send do
+            //_printf("Buffer sending from node %d to node %d\n", sourceId, destId);
+        end
+    with
+        every receive do
+        end
+    end
+
+    await FOREVER;
+end
