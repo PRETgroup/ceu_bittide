@@ -1,0 +1,59 @@
+native/pre do
+    #include "link_fifo.c"
+end
+native/pure
+    _queue_t,
+    _make_queue,
+    _queue_read,
+    _queue_write,
+    _queue_peek,
+    _get_tail_time,
+    _LinkFrame,
+    _MIN
+;
+code/await Link(var& Buffer buffA, var& Buffer buffB, var& _double global_time, var _double latency, event& _double time_event)-> 
+    (var _double next_clock_tick_time)-> NEVER do
+    var int aToB = _make_queue(100);
+    var int bToA = _make_queue(100);
+    next_clock_tick_time = _DBL_MAX;
+
+    code/call UpdateNextTickTime(none)->none do
+        outer.next_clock_tick_time = _MIN(_get_tail_time(outer.aToB), _get_tail_time(outer.bToA));
+    end
+
+    par/and do
+        loop do //move from link a->b to node b
+            var _double simulation_time = await time_event;
+            var _double exec_time = _get_tail_time(aToB);
+            if (simulation_time >= exec_time) then
+                //move frame to receiving buffer
+                var _LinkFrame nextLF = _queue_read(aToB);
+                call UpdateNextTickTime();
+            end
+        end
+    with
+        loop do //move from link b->a to node a
+            var _double simulation_time = await time_event;
+            var _double exec_time = _get_tail_time(bToA);
+            if (simulation_time >= exec_time) then
+                //move frame to receiving buffer
+                var _LinkFrame nextLF = _queue_read(bToA);
+                call UpdateNextTickTime();
+            end
+        end
+    with
+        loop do //
+            var _BittideFrame packet_contents = await buffA.sendevent;
+            _printf("Link detected buff A send event!\n");
+            //schedule at current time + latency
+            call UpdateNextTickTime();
+        end
+    with 
+        loop do
+            var _BittideFrame packet_contents = await buffB.sendevent;
+            _printf("Link detected buff B send event!\n");
+            call UpdateNextTickTime();
+        end
+    end
+    await FOREVER;
+end

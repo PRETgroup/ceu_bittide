@@ -1,6 +1,10 @@
-code/await Buffer(var int size, event& none send, event& none receive, var int sourceId, var int destId)-> NEVER do
+code/await Buffer(var int size, event& none send, event& none receive, var int sourceId, var int destId)
+->(event _BittideFrame sendevent)-> NEVER do
+    var[size] int buffData = [];
     par/and do
         every send do
+            var _BittideFrame outgoing = _create_empty_bittide_frame();
+            emit sendevent(outgoing);
             //_printf("Buffer sending from node %d to node %d\n", sourceId, destId);
         end
     with

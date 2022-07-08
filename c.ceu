@@ -43,7 +43,7 @@ native/nohold
     _sscanf,
     _strcpy,
     _strncat,
-    _strncpy,
+    _strncpy
 ;
 
 native
