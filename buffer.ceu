@@ -11,10 +11,12 @@ native/plain
     _BittideFrame,
     _create_empty_bittide_frame,
     _get_buffer_occupancy,
+    _get_buffer_occupancy_pcnt,
 ;
 code/await Buffer(var int size, event& none clk, var int sourceId, var int destId)
-->(event none send, var _BittideFrame sendData, event none receive, var _BittideFrame receiveData)-> NEVER do
-    var int buffDataHandle = _buff_make_queue(size);
+->(event none send, var _BittideFrame sendData, event none receive, var _BittideFrame receiveData,var int buffDataHandle)
+-> NEVER do
+    buffDataHandle = _buff_make_queue(size);
     _fill_buffer(buffDataHandle, size / 2);
     sendData = _create_empty_bittide_frame();
     receiveData = _create_empty_bittide_frame();

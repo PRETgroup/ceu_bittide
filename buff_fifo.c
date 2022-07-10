@@ -13,6 +13,7 @@ typedef struct {
     size_t head;
     size_t tail;
     size_t size;
+    uint16_t num_elements;
     BittideFrame* data;
 } BuffQueue;
 
@@ -21,6 +22,7 @@ BittideFrame buff_queue_read(int id) {
 
     BittideFrame handle = all_buff_queues[id].data[all_buff_queues[id].tail];
     all_buff_queues[id].tail = (all_buff_queues[id].tail + 1) % all_buff_queues[id].size;
+    all_buff_queues[id].num_elements--;
     return handle;
 }
 
@@ -34,6 +36,7 @@ int buff_queue_write(int id, BittideFrame handle) {
     }
     all_buff_queues[id].data[all_buff_queues[id].head] = handle;
     all_buff_queues[id].head = (all_buff_queues[id].head + 1) % all_buff_queues[id].size;
+    all_buff_queues[id].num_elements++;
     return 0;
 }
 
@@ -43,7 +46,11 @@ void fill_buffer(int bufferHandle, int numberOfFrames) {
 }
 
 int get_buffer_occupancy(int id) {
-    return all_buff_queues[id].head-all_buff_queues[id].tail;
+    return all_buff_queues[id].num_elements;
+}
+
+double get_buffer_occupancy_pcnt(int id) {
+    return (double)get_buffer_occupancy(id) / (double)all_buff_queues[id].size;
 }
 
 static int buff_count = 0;

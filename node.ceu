@@ -18,6 +18,12 @@ code/await NodeProcess (var int num_nodes, var _double freq, event& _double time
         every local_clock_tick do
             _printf("Clock ticked on node %d\n", id);
             //update frequency with control policy
+            //for each buffer connected, send its occupancy
+            var&? Buffer buff_it;
+            loop buff_it in localBuffers do
+                var& Buffer my_buff = &buff_it!;
+                var _double percent_occupancy = _get_buffer_occupancy_pcnt(my_buff.buffDataHandle);
+            end
         end
     end
 
