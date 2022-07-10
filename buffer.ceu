@@ -1,14 +1,36 @@
-code/await Buffer(var int size, event& none send, event& none receive, var int sourceId, var int destId)
-->(event _BittideFrame sendevent)-> NEVER do
-    var[size] int buffData = [];
+native/pre do
+    #include "buff_fifo.c"
+end
+native/plain
+    _BuffQueue,
+    _buff_make_queue,
+    _buff_queue_read,
+    _buff_queue_write,
+    _buff_queue_peek,
+    _fill_buffer,
+    _BittideFrame,
+    _create_empty_bittide_frame,
+    _get_buffer_occupancy,
+;
+code/await Buffer(var int size, event& none clk, var int sourceId, var int destId)
+->(event none send, var _BittideFrame sendData, event none receive, var _BittideFrame receiveData)-> NEVER do
+    var int buffDataHandle = _buff_make_queue(size);
+    _fill_buffer(buffDataHandle, size / 2);
+    sendData = _create_empty_bittide_frame();
+    receiveData = _create_empty_bittide_frame();
     par/and do
-        every send do
-            var _BittideFrame outgoing = _create_empty_bittide_frame();
-            emit sendevent(outgoing);
-            //_printf("Buffer sending from node %d to node %d\n", sourceId, destId);
+        every clk do
+            sendData = _buff_queue_read(buffDataHandle);
+            _printf("Buffer %d send event!\n", buffDataHandle);
+            _printf("Buffer %d occupancy: %d\n", buffDataHandle, _get_buffer_occupancy(buffDataHandle));
+            emit send;
         end
     with
-        every receive do
+        loop do
+            await receive; //receive data should be placed in var before this is emitted (unfortunately abstract types can not be values in signals)
+            _printf("Buffer %d detected receive event!\n",buffDataHandle);
+            _buff_queue_write(buffDataHandle, receiveData);
+            _printf("Buffer %d occupancy: %d\n", buffDataHandle, _get_buffer_occupancy(buffDataHandle));
         end
     end
 
