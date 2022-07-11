@@ -17,47 +17,48 @@ typedef struct {
     BittideFrame* data;
 } BuffQueue;
 
-static BuffQueue all_buff_queues[256]; //max 256 buffs in this case
-BittideFrame buff_queue_read(int id) {
+BittideFrame buff_queue_read(BuffQueue* bq) {
 
-    BittideFrame handle = all_buff_queues[id].data[all_buff_queues[id].tail];
-    all_buff_queues[id].tail = (all_buff_queues[id].tail + 1) % all_buff_queues[id].size;
-    all_buff_queues[id].num_elements--;
+    BittideFrame handle = bq->data[bq->tail];
+    bq->tail = (bq->tail + 1) % bq->size;
+    bq->num_elements--;
     return handle;
 }
 
-BittideFrame buff_queue_peek(int id) {
-    BittideFrame handle = all_buff_queues[id].data[all_buff_queues[id].tail];
+BittideFrame buff_queue_peek(BuffQueue* bq) {
+    BittideFrame handle = bq->data[bq->tail];
     return handle;
 }
-int buff_queue_write(int id, BittideFrame handle) {
-    if (((all_buff_queues[id].head + 1) % all_buff_queues[id].size) == all_buff_queues[id].tail) {
+int buff_queue_write(BuffQueue* bq, BittideFrame handle) {
+    if (((bq->head + 1) % bq->size) == bq->tail) {
         return -1;
     }
-    all_buff_queues[id].data[all_buff_queues[id].head] = handle;
-    all_buff_queues[id].head = (all_buff_queues[id].head + 1) % all_buff_queues[id].size;
-    all_buff_queues[id].num_elements++;
+    bq->data[bq->head] = handle;
+    bq->head = (bq->head + 1) % bq->size;
+    bq->num_elements++;
     return 0;
 }
 
-void fill_buffer(int bufferHandle, int numberOfFrames) {
+void fill_buffer(BuffQueue* bufferHandle, int numberOfFrames) {
     for(int i = 0; i < numberOfFrames; i++)
         buff_queue_write(bufferHandle,create_empty_bittide_frame());
 }
 
-int get_buffer_occupancy(int id) {
-    return all_buff_queues[id].num_elements;
+int get_buffer_occupancy(BuffQueue* bq) {
+    return bq->num_elements;
 }
 
-double get_buffer_occupancy_pcnt(int id) {
-    return (double)get_buffer_occupancy(id) / (double)all_buff_queues[id].size;
+double get_buffer_occupancy_pcnt(BuffQueue* bq) {
+    return (double)get_buffer_occupancy(bq) / (double)bq->size;
 }
 
-static int buff_count = 0;
-int buff_make_queue(int size) {
-    all_buff_queues[buff_count].head=0;
-    all_buff_queues[buff_count].tail=0;
-    all_buff_queues[buff_count].size=size;
-    all_buff_queues[buff_count].data= malloc(sizeof(BittideFrame) * size);
-    return buff_count++;
+BuffQueue buff_make_queue(int size) {
+    BuffQueue bq;
+    bq.head=0;
+    bq.tail=0;
+    bq.size=size;
+    bq.num_elements = 0;
+    bq.data= malloc(sizeof(BittideFrame) * size);
+    fill_buffer(&bq, size/2);
+    return bq;
 }

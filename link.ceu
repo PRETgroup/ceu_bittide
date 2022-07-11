@@ -14,21 +14,52 @@ native/plain
 ;
 code/await Link(var& Buffer buffA, var& Buffer buffB, var& _double global_time, var _double latency, event& _double time_event)-> 
     (var _double next_clock_tick_time)-> NEVER do
-    var int aToB = _link_make_queue(100);
-    var int bToA = _link_make_queue(100);
+    var _LinkQueue aToB = _link_make_queue(100);
+    var _LinkQueue bToA = _link_make_queue(100);
     next_clock_tick_time = _DBL_MAX;
 
-    code/call UpdateNextTickTime(none)->none do
-        outer.next_clock_tick_time = _MIN(_link_get_tail_time(outer.aToB), _link_get_tail_time(outer.bToA));
+    //helper functions
+    code/call GetNextLinkTime(var& _LinkQueue lq)->_double do
+        var _LinkQueue&& qPtr = &&lq;
+        var _double t;
+        do
+            t = _link_get_tail_time(qPtr);
+        finalize (qPtr) with
+        end;
+        escape t;
+    end
+    code/call ReadQueue(var& _LinkQueue lq)->_LinkFrame do
+        var _LinkQueue&& qPtr = &&lq;
+        var _LinkFrame l;
+        do
+            l = _link_queue_read(qPtr);
+        finalize (qPtr) with
+        end
+        escape l;
+    end
+    code/call WriteQueue(var& _LinkQueue lq, var _LinkFrame lf)->int do
+        var _LinkQueue&& qPtr = &&lq;
+        var int status;
+        do
+            status = _link_queue_write(qPtr,lf);
+        finalize (qPtr) with
+        end
+        escape status;
     end
 
+    code/call UpdateNextTickTime(none)->none do
+        var _double abTime = call GetNextLinkTime(&outer.aToB);
+        var _double baTime = call GetNextLinkTime(&outer.bToA);
+        outer.next_clock_tick_time = _MIN(abTime, baTime);
+    end
+    //synchronous logic
     par/and do
         loop do //move from link a->b to node b
             var _double simulation_time = await time_event;
-            var _double exec_time = _link_get_tail_time(aToB);
+            var _double exec_time = call GetNextLinkTime(&aToB);
             if (simulation_time >= exec_time) then
                 //move frame to receiving buffer
-                var _LinkFrame nextLF = _link_queue_read(aToB);
+                var _LinkFrame nextLF = call ReadQueue(&aToB);
                 buffB.receiveData = nextLF.frame;
                 emit buffB.receive;
                 call UpdateNextTickTime();
@@ -37,10 +68,10 @@ code/await Link(var& Buffer buffA, var& Buffer buffB, var& _double global_time, 
     with
         loop do //move from link b->a to node a
             var _double simulation_time = await time_event;
-            var _double exec_time = _link_get_tail_time(bToA);
+            var _double exec_time = call GetNextLinkTime(&bToA);
             if (simulation_time >= exec_time) then
                 //move frame to receiving buffer
-                var _LinkFrame nextLF = _link_queue_read(bToA);
+                var _LinkFrame nextLF = call ReadQueue(&bToA);
                 buffA.receiveData = nextLF.frame;
                 emit buffA.receive;
                 call UpdateNextTickTime();
@@ -52,7 +83,7 @@ code/await Link(var& Buffer buffA, var& Buffer buffB, var& _double global_time, 
             var _BittideFrame packet_contents = buffA.sendData;
             //schedule at current time + latency
             var _LinkFrame lf = _make_linkframe(packet_contents, global_time + latency);
-            _link_queue_write(aToB,lf);
+            call WriteQueue(&aToB,lf);
             call UpdateNextTickTime();
             
         end
@@ -61,7 +92,7 @@ code/await Link(var& Buffer buffA, var& Buffer buffB, var& _double global_time, 
             await buffB.send;
             var _BittideFrame packet_contents = buffB.sendData;
             var _LinkFrame lf = _make_linkframe(packet_contents, global_time + latency);
-            _link_queue_write(bToA,lf);
+            call WriteQueue(&bToA,lf);
             call UpdateNextTickTime();
         end
     end

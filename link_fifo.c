@@ -11,13 +11,10 @@ typedef struct {
     LinkFrame* data;
 } LinkQueue;
 
-static LinkQueue all_link_queues[256]; //max 256 links in this case
 
-
-LinkFrame link_queue_read(int id) {
-
-    LinkFrame handle = all_link_queues[id].data[all_link_queues[id].tail];
-    all_link_queues[id].tail = (all_link_queues[id].tail + 1) % all_link_queues[id].size;
+LinkFrame link_queue_read(LinkQueue* q) {
+    LinkFrame handle = q->data[q->tail];
+    q->tail = (q->tail + 1) % q->size;
     return handle;
 }
 
@@ -26,30 +23,31 @@ LinkFrame make_linkframe(BittideFrame data, double deadline) {
     return new_frame;
 }
 
-LinkFrame link_queue_peek(int id) {
-    LinkFrame handle = all_link_queues[id].data[all_link_queues[id].tail];
+LinkFrame link_queue_peek(LinkQueue* q) {
+    LinkFrame handle = q->data[q->tail];
     return handle;
 }
 
-double link_get_tail_time(int id){
-    LinkFrame handle = all_link_queues[id].data[all_link_queues[id].tail];
+double link_get_tail_time(LinkQueue* q){
+    LinkFrame handle = q->data[q->tail];
     return handle.scheduledTime;
 }
 
-int link_queue_write(int id, LinkFrame handle) {
-    if (((all_link_queues[id].head + 1) % all_link_queues[id].size) == all_link_queues[id].tail) {
+int link_queue_write(LinkQueue* q, LinkFrame handle) {
+    if (((q->head + 1) % q->size) == q->tail) {
         return -1;
     }
-    all_link_queues[id].data[all_link_queues[id].head] = handle;
-    all_link_queues[id].head = (all_link_queues[id].head + 1) % all_link_queues[id].size;
+    q->data[q->head] = handle;
+    q->head = (q->head + 1) % q->size;
     return 0;
 }
 
 static int link_count = 0;
-int link_make_queue(int size) {
-    all_link_queues[link_count].head=0;
-    all_link_queues[link_count].tail=0;
-    all_link_queues[link_count].size=size;
-    all_link_queues[link_count].data= malloc(sizeof(LinkFrame) * size);
-    return link_count++;
+LinkQueue link_make_queue(int size) {
+    LinkQueue q;
+    q.head=0;
+    q.tail=0;
+    q.size=size;
+    q.data= malloc(sizeof(LinkFrame) * size);
+    return q;
 }
