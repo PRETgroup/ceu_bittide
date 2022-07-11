@@ -5,11 +5,9 @@ native/pure _get_next_time;
 native/const _DBL_MAX;
 native/const _NUM_ITERATIONS;
 native/pre do 
-    static const int NUM_ITERATIONS = 1000;
+    static const int NUM_ITERATIONS = 150000;
     #include <float.h>;
 end
-
-
 #include "buffer.ceu"
 #include "node.ceu"
 #include "link.ceu"
@@ -21,10 +19,10 @@ event _double time_delta; //simulate time passing in real world
 var _double global_time = 0;
 var int num_nodes = 2;
 //create nodes
-var& NodeProcess proc0 = spawn NodeProcess(num_nodes, 2000.0, &time_delta, 0) in all_processes;
+var& NodeProcess proc0 = spawn NodeProcess(num_nodes, 1950.0, &time_delta, 0) in all_processes;
 var& NodeProcess proc1  = spawn NodeProcess(num_nodes, 2000.0, &time_delta, 1) in all_processes;
-var& Buffer buff01 = spawn Buffer(100, &proc0.local_clock_tick,0,1) in proc0.localBuffers;
-var& Buffer buff10 = spawn Buffer(100, &proc1.local_clock_tick,1,0) in proc1.localBuffers;
+var& Buffer buff01 = spawn Buffer(10000, &proc0.local_clock_tick,0,1) in proc0.localBuffers;
+var& Buffer buff10 = spawn Buffer(10000, &proc1.local_clock_tick,1,0) in proc1.localBuffers;
 var& Link l_0_1 = spawn Link(&buff01, &buff10, &global_time, 0.000, &time_delta) in all_links;
 
 loop _ in [0->_NUM_ITERATIONS] do

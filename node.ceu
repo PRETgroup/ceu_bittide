@@ -5,10 +5,10 @@ code/await NodeProcess (var int num_nodes, var _double freq, event& _double time
     id = my_id;
     frequency = freq;
     next_clock_tick_time = 1/frequency;
-    var _double previous_occupancy = 0.50;
-    var _double kp = 0.001;
-    var _double ki = 0.001;
-    var _double integral_deadzone = 0.01;
+    var _double previous_occupancy = 50;
+    var _double kp = 5;
+    var _double ki = 5;
+    var _double integral_deadzone = 1;
     var _double integral_sum = 0;
 
     par/and do
@@ -33,8 +33,8 @@ code/await NodeProcess (var int num_nodes, var _double freq, event& _double time
                 cumulative_occupancy = cumulative_occupancy + percent_occupancy;
                 count = count + 1;
             end
-            var _double average_occupancy = (cumulative_occupancy / count);
-            _printf("Average occupancy: %lf\n", average_occupancy);
+            var _double average_occupancy = (cumulative_occupancy / count) * 100;
+            //_printf("Average occupancy: %lf\n", average_occupancy);
             var _double change = average_occupancy - previous_occupancy;
             integral_sum = integral_sum + change;
             previous_occupancy = average_occupancy;
@@ -46,8 +46,9 @@ code/await NodeProcess (var int num_nodes, var _double freq, event& _double time
             end
 
             var _double frequency_adjustment = p_term + i_term;
+            _printf("Node %d frequency adjustment: %lf\n",id, frequency_adjustment);
             frequency = frequency + frequency_adjustment;
-            _printf("Integral sum is now %lf\n", integral_sum);
+           // _printf("Integral sum is now %lf\n", integral_sum);
             _printf("Frequency on node %d is now: %lf\n", id, frequency);
         end
     end
