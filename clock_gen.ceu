@@ -25,7 +25,7 @@ var& NodeProcess proc0 = spawn NodeProcess(num_nodes, 2000.0, &time_delta, 0) in
 var& NodeProcess proc1  = spawn NodeProcess(num_nodes, 2000.0, &time_delta, 1) in all_processes;
 var& Buffer buff01 = spawn Buffer(100, &proc0.local_clock_tick,0,1) in proc0.localBuffers;
 var& Buffer buff10 = spawn Buffer(100, &proc1.local_clock_tick,1,0) in proc1.localBuffers;
-var& Link l_0_1 = spawn Link(&buff01, &buff10, &global_time, 0.006, &time_delta) in all_links;
+var& Link l_0_1 = spawn Link(&buff01, &buff10, &global_time, 0.000, &time_delta) in all_links;
 
 loop _ in [0->_NUM_ITERATIONS] do
     //find the lowest next scheduled time
