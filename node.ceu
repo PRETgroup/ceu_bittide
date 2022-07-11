@@ -7,8 +7,8 @@ code/await NodeProcess (var int num_nodes, var _double freq, event& _double time
     next_clock_tick_time = 1/frequency;
     var _double previous_occupancy = 50;
     var _double kp = 5;
-    var _double ki = 5;
-    var _double integral_deadzone = 1;
+    var _double ki = 0;
+    var _double integral_deadzone = 0;
     var _double integral_sum = 0;
 
     par/and do

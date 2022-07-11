@@ -83,7 +83,6 @@ code/await Link(var& Buffer buffA, var& Buffer buffB, var& _double global_time, 
             var _BittideFrame packet_contents = buffA.sendData;
             //schedule at current time + latency
             var _LinkFrame lf = _make_linkframe(packet_contents, global_time + latency);
-            _printf("Scheduling Link Frame! (a) %lf\n", global_time + latency);
             call WriteQueue(&aToB,lf);
             call UpdateNextTickTime();
             
@@ -93,7 +92,6 @@ code/await Link(var& Buffer buffA, var& Buffer buffB, var& _double global_time, 
             await buffB.send;
             var _BittideFrame packet_contents = buffB.sendData;
             var _LinkFrame lf = _make_linkframe(packet_contents, global_time + latency);
-            _printf("Scheduling Link Frame! (b) %lf\n", global_time + latency);
             call WriteQueue(&bToA,lf);
             call UpdateNextTickTime();
         end

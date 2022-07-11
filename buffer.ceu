@@ -50,16 +50,16 @@ code/await Buffer(var int size, event& none clk, var int sourceId, var int destI
     par/and do
         every clk do
             sendData = call ReadQueue(&buff);
-            //_printf("Buffer %d->%d send event!\n", sourceId, destId);
-            _printf("Buffer %d->%d occupancy: %.2lf\n", sourceId, destId, call GetOccupancyPcnt(&buff));
+            _printf("Buffer %d->%d send event!\n", sourceId, destId);
+            _printf("Buffer %d->%d occupancy: %.4lf\n", sourceId, destId, call GetOccupancyPcnt(&buff));
             emit send;
         end
     with
         loop do
             await receive; //receive data should be placed in var before this is emitted (unfortunately abstract types can not be values in signals)
-            //_printf("Buffer %d->%d detected receive event!\n",sourceId, destId);
+            _printf("Buffer %d->%d detected receive event!\n",sourceId, destId);
             call WriteQueue(&buff, receiveData);
-            _printf("Buffer %d->%d occupancy: %.2lf\n", sourceId, destId, call GetOccupancyPcnt(&buff));
+            _printf("Buffer %d->%d occupancy: %.4lf\n", sourceId, destId, call GetOccupancyPcnt(&buff));
         end
     end
 
