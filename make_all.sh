@@ -1,6 +1,7 @@
 #!/bin/bash
 CC_ARGS_="-llua5.3 -lpthread"
 EXE_NAME="ceu_test"
+mkdir tmp
 echo $CEU_DIR #set this in bashrc
 CEU_SRC=$PWD/clock_gen.ceu
 ceu --pre --pre-input=$CEU_SRC --pre-args=\"-I.$CEU_DIR/include\"                \
