@@ -14,7 +14,7 @@ By typing the following command you can download and deploy a new docker contain
 
 After the docker image has been succesfully installed, you will find yourself in a command prompt within the deployed Ubuntu image. You will also see an image has been created with an automatically assigned name in the docker dashboard. From within this command prompt, you can clone this git repository onto the virtual machine.
 
-Finally, we need to add the location of Ceu to our system variables so that our simulator can find the relevant files.
+Finally, we need to add the location of Ceu to our VM system variables so that our simulator can find the relevant files.
 `echo 'export CEU_DIR=/ceu/' >> ~/.bashrc`
 
 `source ~/.bashrc`
